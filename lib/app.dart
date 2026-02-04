@@ -23,6 +23,7 @@ class _AppState extends State<App> {
   late final AuthCubit _authCubit;
   late final AppRouter _appRouter;
   StreamSubscription<Map<String, String>>? _notificationTapSubscription;
+  StreamSubscription<AuthState>? _authSubscription;
 
   @override
   void initState() {
@@ -32,7 +33,11 @@ class _AppState extends State<App> {
     _notificationTapSubscription = FcmService.notificationTapStream.listen(_onNotificationTap);
     // Xử lý pending (app mở từ notification khi terminated)
     WidgetsBinding.instance.addPostFrameCallback((_) => _flushPendingNotification());
-    
+    // Khi auth vừa xong (checkAuth/login) mà có pending → flush lại để nhảy đúng trang
+    _authSubscription = _authCubit.stream.listen((state) {
+      if (state is AuthAuthenticated) _flushPendingNotification();
+    });
+
     // Setup callback cho CallKit khi user accept cuộc gọi
     _setupCallKitCallbacks();
   }
@@ -95,15 +100,16 @@ class _AppState extends State<App> {
   }
 
   void _flushPendingNotification() {
-    final pending = FcmService.takePendingNotificationData();
-    if (pending != null && pending.isNotEmpty) {
-      // Trì hoãn để auth redirect xong rồi mới điều hướng
-      Future.delayed(const Duration(milliseconds: 800), () {
-        if (!mounted) return;
-        if (_authCubit.state is! AuthAuthenticated) return;
-        _onNotificationTap(pending);
-      });
-    }
+    // Chỉ xử lý khi có pending (peek, chưa take) — take khi đã auth để không mất pending
+    if (FcmService.pendingNotificationData == null ||
+        FcmService.pendingNotificationData!.isEmpty) return;
+    // Trì hoãn để auth redirect xong rồi mới điều hướng
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (!mounted) return;
+      if (_authCubit.state is! AuthAuthenticated) return;
+      final pending = FcmService.takePendingNotificationData();
+      if (pending != null && pending.isNotEmpty) _onNotificationTap(pending);
+    });
   }
 
   void _onNotificationTap(Map<String, String> data) {
@@ -136,6 +142,7 @@ class _AppState extends State<App> {
   @override
   void dispose() {
     _notificationTapSubscription?.cancel();
+    _authSubscription?.cancel();
     _authCubit.close();
     super.dispose();
   }
