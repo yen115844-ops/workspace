@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "314405218633",
+    "project_id": "workspace-af384",
+    "storage_bucket": "workspace-af384.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:314405218633:android:909509378a628dd45c9298",
+        "android_client_info": {
+          "package_name": "com.trancongtien.work"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhWFFHfSlBrKN3UndCd58OS18RbzO0PAw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
